@@ -1,21 +1,25 @@
-import { Controller, Delete, Get, Param, Post, Put, Body } from "@nestjs/common";
-import { report } from "process";
+import { Controller, Delete, Get, Param, Post, Put, Body, HttpCode } from "@nestjs/common";
 import {data, ReportType} from 'src/data';
 import { v4 as uuid } from "uuid";
+import {AppService} from"./app.service";
 
 @Controller('report/:type')
 export class AppController {
+    constructor(
+        private readonly appService:AppService
+    ){}
+    
     @Get()
     GetAllIncomeReports(@Param('type')type:string) {
         const reportType = 
         type==='income' ? ReportType.INCOME : ReportType.EXPENSE
-        return data.report.filter((report)=>report.type===reportType)
+        return this.appService.getAllIncomeReports(reportType)
     }
     @Get(':id')
     GetIncomeReportById(@Param('type')type:string,@Param('id')id:string) {
         const reportType = 
         type==='income' ? ReportType.INCOME : ReportType.EXPENSE
-        return data.report.filter((report)=>report.type===reportType).find(report=>report.id===id)
+        return this.appService.getIncomeReportById(reportType,id)
     }
     @Post()
     createIncomeReport(
@@ -24,16 +28,9 @@ export class AppController {
             source:string
         },@Param('type')type:string
     ){
-        const newReport={
-            id:uuid(),
-            source,
-            amount,
-            created_at: new Date(),
-            updated_at: new Date(),
-            type : type==='income' ? ReportType.INCOME : ReportType.EXPENSE
-        }
-        data.report.push(newReport)
-        return newReport
+        const reportType = 
+        type==='income' ? ReportType.INCOME : ReportType.EXPENSE
+        return this.appService.createIncomeReport(reportType,{source,amount})
     }
     @Put(':id')
     updateIncomeReport( 
@@ -56,6 +53,7 @@ export class AppController {
         }
         return data.report[reportIndex]
     }
+    @HttpCode(204)
     @Delete(':id')
     deleteIncomeReport(@Param('id') id:string){
         const reportIndex=data.report.findIndex(report=>report.id===report.id)
